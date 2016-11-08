@@ -219,7 +219,7 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
     }
 
     // Process raster.
-    if(!processFrameRaster(t, raster, m_frames))
+    if(!processFrameRaster(t, raster))
     {
         addError(ROP_MESSAGE, "Cop Gif: Unable to process COP2 node raster.");
         return ROP_ABORT_RENDER;
@@ -365,14 +365,55 @@ ROP_CopGif::getCopDataChannelCount(PXL_Packing packing) const
 }
 
 
-bool
-ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster, UT_Array<UT_Array<unsigned char> >& frame_data) const
+UT_RGBA
+ROP_CopGif::getRGBA(const unsigned char* pixel_data, PXL_Packing packing, PXL_DataFormat data_format) const
 {
-    if(!raster)
+    UT_RGBA rgba(UT_RGBA::ZERO_INIT);
+    return rgba;
+}
+
+
+bool
+ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster) const
+{
+    if(!raster || !raster->isValid())
     {
         return false;
     }
-    
+
+    if(!m_width)
+    {
+        m_width = raster->getXres();
+    }
+
+    if(!m_height)
+    {
+        m_height = raster->getYres();
+    }
+
+    if(!m_width || !m_height)
+    {
+        return false;
+    }
+
+    if(m_width != raster->getXres() || m_height != raster->getYres())
+    {
+        return false;
+    }
+
+    // Get raster data format and packing.
+    PXL_DataFormat pixel_format = raster->getFormat();
+    PXL_Packing packing = raster->getPacking();
+
+    for(int idx_width = 0; idx_width < m_width; ++idx_width)
+    {
+        for(int idx_height = 0; idx_height < m_height; ++idx_height)
+        {
+            const unsigned char* pixel = (const unsigned char*) raster->getPixel(idx_width, idx_height);
+            UT_RGBA rgba = getRGBA(pixel, packing, pixel_format);
+        }
+    }
+
     return true;
 }
 

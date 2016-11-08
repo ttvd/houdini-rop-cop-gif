@@ -2,7 +2,9 @@
 
 #include <ROP/ROP_Node.h>
 #include <PXL/PXL_Common.h>
+
 #include <UT/UT_Array.h>
+#include <UT/UT_Pixel.h>
 
 #include "gif.h"
 
@@ -51,8 +53,11 @@ class ROP_CopGif : public ROP_Node
         //! Helper function to get number of channels in packing.
         unsigned int getCopDataChannelCount(PXL_Packing packing) const;
 
+        //! Helper function to get an RGBA value from a given pixel value.
+        UT_RGBA getRGBA(const unsigned char* pixel_data, PXL_Packing packing, PXL_DataFormat data_format) const;
+
         //! Helper function which processes the given raster and extracts raw data.
-        bool processFrameRaster(fpreal t, TIL_Raster* raster, UT_Array<UT_Array<unsigned char> >& frame_data) const;
+        bool processFrameRaster(fpreal t, TIL_Raster* raster) const;
 
     public:
 
@@ -84,10 +89,10 @@ class ROP_CopGif : public ROP_Node
         UT_Array<UT_Array<unsigned char> > m_frames;
 
         //! Width of data (in pixels).
-        unsigned int m_width;
+        mutable unsigned int m_width;
 
         //! Height of data (in pixels).
-        unsigned int m_height;
+        mutable unsigned int m_height;
 
     protected:
 
