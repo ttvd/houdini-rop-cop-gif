@@ -222,7 +222,38 @@ ROP_CopGif::endRender()
         executePostRenderScript(m_render_time_end);
     }
 
-    UT_String string_result = "";
+    // Get output path.
+    UT_String output_file;
+    getParamOutputFileName(0, output_file);
+
+    if(!output_file || !output_file.isstring())
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Invalid output gif file specified.");
+        return ROP_ABORT_RENDER;
+    }
+
+    GifWriter gif_writer;
+    if(!GifBegin(&gif_writer, output_file.c_str(), m_width, m_height, 0))
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Unable to initialize gif writer.");
+        return ROP_ABORT_RENDER;
+    }
+
+    for(int frame_idx = 0; frame_idx < m_frames.size(); ++frame_idx)
+    {
+        const unsigned char* frame_data = nullptr;
+        if(!GifWriteFrame(&gif_writer, (const uint8_t*) frame_data, m_width, m_height, 0))
+        {
+            addError(ROP_MESSAGE, "Cop Gif: Unable to write a gif frame.");
+            return ROP_ABORT_RENDER;
+        }
+    }
+
+    if(!GifEnd(&gif_writer))
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Unable to finalize gif writer.");
+        return ROP_ABORT_RENDER;
+    }
 
     return ROP_CONTINUE_RENDER;
 }
