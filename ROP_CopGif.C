@@ -510,6 +510,7 @@ ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster) const
         }
     }
 
+    m_frames.append(frame_data);
     return true;
 }
 

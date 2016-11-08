@@ -89,7 +89,7 @@ class ROP_CopGif : public ROP_Node
     protected:
 
         //! List of frames.
-        UT_Array<UT_Array<unsigned char> > m_frames;
+        mutable UT_Array<UT_Array<unsigned char> > m_frames;
 
         //! Width of data (in pixels).
         mutable unsigned int m_width;
