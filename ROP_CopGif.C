@@ -73,10 +73,10 @@ getTemplates()
         PRM_Template(PRM_STRING, PRM_TYPE_DYNAMIC_PATH, 1, &s_name_cop_path, 0, 0, 0, 0, &PRM_SpareData::cop2Path),
 
     ROP_CopGif::ms_template[template_idx++] =
-        PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
+        PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane);
 
     ROP_CopGif::ms_template[template_idx++] =
-        PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane);
+        PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
 
     ROP_CopGif::ms_template[template_idx++] = PRM_Template();
 
