@@ -75,7 +75,7 @@ getTemplates()
     ROP_CopGif::ms_template[template_idx++] =
         PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
 
-    ROP_CopGif::ms_template[template_idx] =
+    ROP_CopGif::ms_template[template_idx++] =
         PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane);
 
     ROP_CopGif::ms_template[template_idx++] = PRM_Template();
