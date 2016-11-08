@@ -218,6 +218,13 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
         return ROP_ABORT_RENDER;
     }
 
+    // Make sure we support raster format.
+    if(!isCopDataFloat(raster->getFormat()))
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Non floating raster formats are not supported.");
+        return ROP_ABORT_RENDER;
+    }
+
     // Process raster.
     if(!processFrameRaster(t, raster))
     {
@@ -365,11 +372,84 @@ ROP_CopGif::getCopDataChannelCount(PXL_Packing packing) const
 }
 
 
-UT_RGBA
-ROP_CopGif::getRGBA(const unsigned char* pixel_data, PXL_Packing packing, PXL_DataFormat data_format) const
+bool
+ROP_CopGif::isCopDataFloat(PXL_DataFormat data_format) const
 {
-    UT_RGBA rgba(UT_RGBA::ZERO_INIT);
-    return rgba;
+    switch(data_format)
+    {
+        case PXL_FLOAT16:
+        case PXL_FLOAT32:
+        {
+            return true;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return false;
+}
+
+
+void
+ROP_CopGif::getFramePixel(const unsigned char* pixel_data, PXL_Packing packing, PXL_DataFormat data_format,
+    UT_Array<unsigned char>& frame_data) const
+{
+    unsigned int num_channels = getCopDataChannelCount(packing);
+    for(unsigned int channel_idx = 0; channel_idx < 4; ++channel_idx)
+    {
+        if(channel_idx < num_channels)
+        {
+            fpreal value = 0.0f;
+
+            switch(data_format)
+            {
+                case PXL_FLOAT16:
+                {
+                    const fpreal16* pixel_cast = (const fpreal16*) pixel_data;
+                    value = (fpreal)(*(pixel_cast + channel_idx));
+                    break;
+                }
+
+                case PXL_FLOAT32:
+                {
+                    const float* pixel_cast = (const float*) pixel_data;
+                    value = *(pixel_cast + channel_idx);
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+
+            value = SYSclamp(value, 0.0f, 1.0f);
+
+            if(value == 1.0f)
+            {
+                frame_data.append(255u);
+            }
+            else
+            {
+                unsigned int pixel_value = SYSfloor(256.0f * value);
+                frame_data.append(pixel_value);
+            }
+        }
+        else
+        {
+            if(3 == channel_idx)
+            {
+                frame_data.append(255u);
+            }
+            else
+            {
+                frame_data.append(0u);
+            }
+        }
+    }
 }
 
 
@@ -405,12 +485,20 @@ ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster) const
     PXL_DataFormat pixel_format = raster->getFormat();
     PXL_Packing packing = raster->getPacking();
 
+    // We only support floating point formats.
+    if(!isCopDataFloat(pixel_format))
+    {
+        return false;
+    }
+
+    UT_Array<unsigned char> frame_data;
+
     for(int idx_width = 0; idx_width < m_width; ++idx_width)
     {
         for(int idx_height = 0; idx_height < m_height; ++idx_height)
         {
             const unsigned char* pixel = (const unsigned char*) raster->getPixel(idx_width, idx_height);
-            UT_RGBA rgba = getRGBA(pixel, packing, pixel_format);
+            getFramePixel(pixel, packing, pixel_format, frame_data);
         }
     }
 
