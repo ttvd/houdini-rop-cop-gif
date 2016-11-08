@@ -1,12 +1,14 @@
 #pragma once
 
 #include <ROP/ROP_Node.h>
+#include <PXL/PXL_Common.h>
 #include <UT/UT_Array.h>
 
 #include "gif.h"
 
 
 class TIL_CopResolver;
+class TIL_Raster;
 
 
 class ROP_CopGif : public ROP_Node
@@ -46,6 +48,12 @@ class ROP_CopGif : public ROP_Node
         //! Helper function which retrieves a full path to a given cop2 node.
         bool getFullCopPath(const UT_String& relative_path, UT_String& full_path) const;
 
+        //! Helper function to get number of channels in packing.
+        unsigned int getCopDataChannelCount(PXL_Packing packing) const;
+
+        //! Helper function which processes the given raster and extracts raw data.
+        bool processFrameRaster(fpreal t, TIL_Raster* raster, UT_Array<UT_Array<unsigned char> >& frame_data) const;
+
     public:
 
         //! Templates.
@@ -60,6 +68,9 @@ class ROP_CopGif : public ROP_Node
 
         //! Parameter evaluation - retrieve output fule name.
         void getParamOutputFileName(fpreal t, UT_String& output_file) const;
+
+        //! Parameter evaluation - retrieve the name of the image plane.
+        void getImagePlaneName(fpreal t, UT_String& image_plane_name) const;
 
     protected:
 

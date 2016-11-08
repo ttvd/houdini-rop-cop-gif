@@ -21,15 +21,21 @@
 #define ROP_COP_GIF_NAME "copgif"
 #define ROP_COP_GIF_DESCRIPTION "COP Gif"
 
+#define ROP_COP_GIF_DEFAULT_COP_PLANE "C"
+
 
 #define ROP_COP_GIF_COP_PATH "cop_path"
 #define ROP_COP_GIF_OUTPUT_FILE "output_file"
+#define SOP_COP_GIF_PLANE "cop_plane"
 #define ROP_COP_GIF_SEPARATOR "rop_cop_gif_separator"
 
 
 static PRM_Name s_name_file_output(ROP_COP_GIF_OUTPUT_FILE, "Output File");
 static PRM_Name s_name_cop_path(ROP_COP_GIF_COP_PATH, "COP Path");
+static PRM_Name s_name_cop_plane(SOP_COP_GIF_PLANE, "COP2 Plane");
 static PRM_Name s_name_separator(ROP_COP_GIF_SEPARATOR, "");
+
+static PRM_Default s_default_name_cop_plane(0.0f, ROP_COP_GIF_DEFAULT_COP_PLANE);
 
 static PRM_SpareData s_spare_file_output(PRM_SpareArgs()
     << PRM_SpareToken(PRM_SpareData::getFileChooserModeToken(), PRM_SpareData::getFileChooserModeValRead())
@@ -57,7 +63,7 @@ getTemplates()
         return ROP_CopGif::ms_template;
     }
 
-    const int template_count = 4;
+    const int template_count = 5;
     ROP_CopGif::ms_template = new PRM_Template[template_count];
     int template_idx = 0;
 
@@ -68,6 +74,9 @@ getTemplates()
 
     ROP_CopGif::ms_template[template_idx++] =
         PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
+
+    ROP_CopGif::ms_template[template_idx] =
+        PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane),
 
     ROP_CopGif::ms_template[template_idx++] = PRM_Template();
 
@@ -142,6 +151,13 @@ ROP_CopGif::startRender(int nframes, fpreal time_start, fpreal time_end)
     m_render_time_start = time_start;
     m_render_time_end = time_end;
 
+    // Reset frame sizes.
+    m_width = 0u;
+    m_height = 0u;
+
+    // Clear previously stored frames.
+    m_frames.clear();
+
     return 1;
 }
 
@@ -154,6 +170,9 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
     {
         return ROP_ABORT_RENDER;
     }
+
+    UT_String cop_image_plane;
+    getImagePlaneName(t, cop_image_plane);
 
     UT_String cop_relative_path;
     getParamCopPath(t, cop_relative_path);
@@ -185,7 +204,7 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
     }
 
     // Get COP2 raster.
-    TIL_Raster* raster = m_cop_resolver->getNodeRaster(cop_full_path, "C", "");
+    TIL_Raster* raster = m_cop_resolver->getNodeRaster(cop_full_path, cop_image_plane, "");
     if(!raster)
     {
         addError(ROP_MESSAGE, "Cop Gif: Unable to retrieve COP2 node raster.");
@@ -200,6 +219,11 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
     }
 
     // Process raster.
+    if(!processFrameRaster(t, raster, m_frames))
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Unable to process COP2 node raster.");
+        return ROP_ABORT_RENDER;
+    }
 
     // Return raster back to resolver.
     m_cop_resolver->returnRaster(raster);
@@ -285,7 +309,6 @@ ROP_CopGif::getFullCopPath(const UT_String& relative_path, UT_String& full_path)
 }
 
 
-
 void
 ROP_CopGif::getParamCopPath(fpreal t, UT_String& cop_path) const
 {
@@ -297,6 +320,60 @@ void
 ROP_CopGif::getParamOutputFileName(fpreal t, UT_String& output_file) const
 {
     evalString(output_file, ROP_COP_GIF_OUTPUT_FILE, 0, t);
+}
+
+
+void
+ROP_CopGif::getImagePlaneName(fpreal t, UT_String& image_plane_name) const
+{
+    evalString(image_plane_name, SOP_COP_GIF_PLANE, 0, t);
+}
+
+
+unsigned int
+ROP_CopGif::getCopDataChannelCount(PXL_Packing packing) const
+{
+    switch(packing)
+    {
+        case PACK_SINGLE:
+        {
+            return 1u;
+        }
+
+        case PACK_DUAL:
+        {
+            return 2u;
+        }
+
+        case PACK_RGB:
+        {
+            return 3u;
+        }
+
+        case PACK_RGBA:
+        {
+            return 4u;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return 0u;
+}
+
+
+bool
+ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster, UT_Array<UT_Array<unsigned char> >& frame_data) const
+{
+    if(!raster)
+    {
+        return false;
+    }
+    
+    return true;
 }
 
 
