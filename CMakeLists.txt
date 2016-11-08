@@ -188,6 +188,7 @@ add_definitions(
 
 # Set include directories.
 include_directories(${HOUDINI_ROP_COPGIF_INCLUDE_DIRECTORIES})
+include_directories(gif-h-mit)
 
 # Set link directories.
 link_directories(${HOUDINI_ROP_COPGIF_LINK_DIRECTORIES})

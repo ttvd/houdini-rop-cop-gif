@@ -12,9 +12,10 @@
 #include <CH/CH_LocalVariable.h>
 
 #include <UT/UT_DSOVersion.h>
-#include <UT/UT_SharedPtr.h>
 
-#include <FS/FS_Info.h>
+#include <PXL/PXL_Raster.h>
+#include <TIL/TIL_Raster.h>
+#include <TIL/TIL_CopResolver.h>
 
 
 #define ROP_COP_GIF_NAME "copgif"
@@ -154,38 +155,54 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
         return ROP_ABORT_RENDER;
     }
 
-    UT_String string_result = "";
+    UT_String cop_relative_path;
+    getParamCopPath(t, cop_relative_path);
 
-    /*
-    // Retrieve COP path from parameter.
-    UT_String sop_path;
-    getParamSopPath(t, sop_path);
-
-    // Make sure path to SOP is valid.
-    if(!sop_path.isstring())
+    UT_String cop_full_path;
+    if(!getFullCopPath(cop_relative_path, cop_full_path))
     {
-        addError(ROP_MESSAGE, "Vertex Animation: Invalid SOP path.");
+        addError(ROP_MESSAGE, "Cop Gif: Invalid COP2 path.");
         return ROP_ABORT_RENDER;
     }
 
-    // Make sure SOP node exists and we are able to look it up.
-    SOP_Node* sop_node = getSOPNode(sop_path, 1);
-    if(!sop_node)
+    // Make sure COP node exists and we are able to look it up.
+    COP2_Node* cop_node = getCOP2Node(cop_full_path, 1);
+    if(!cop_node)
     {
-        addError(ROP_MESSAGE, "Vertex Animation: Unable to find the SOP node.");
+        addError(ROP_MESSAGE, "Cop Gif: Unable to find the COP2 node.");
         return ROP_ABORT_RENDER;
     }
 
-    // Retrieve SOP geo handle.
-    OP_Context context(t);
-    GU_DetailHandle geo_detail_handle = sop_node->getCookedGeoHandle(context);
-
-    // Make sure we unload the SOP after cooking.
-    if(sop_node->shouldUnload())
+    // Get COP2 resolver.
+    if(!m_cop_resolver)
     {
-        sop_node->unloadData();
+        m_cop_resolver = TIL_CopResolver::getResolver();
+        if(!m_cop_resolver)
+        {
+            addError(ROP_MESSAGE, "Cop Gif: Unable to retrieve COP2 resolver.");
+            return ROP_ABORT_RENDER;
+        }
     }
-    */
+
+    // Get COP2 raster.
+    TIL_Raster* raster = m_cop_resolver->getNodeRaster(cop_full_path, "C", "");
+    if(!raster)
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Unable to retrieve COP2 node raster.");
+        return ROP_ABORT_RENDER;
+    }
+
+    // Make sure raster is valid.
+    if(!raster->isValid())
+    {
+        addError(ROP_MESSAGE, "Cop Gif: Invalid COP2 node raster.");
+        return ROP_ABORT_RENDER;
+    }
+
+    // Process raster.
+
+    // Return raster back to resolver.
+    m_cop_resolver->returnRaster(raster);
 
     // Execute the post-render script.
     if(error() < UT_ERROR_ABORT)
@@ -209,6 +226,33 @@ ROP_CopGif::endRender()
 
     return ROP_CONTINUE_RENDER;
 }
+
+
+bool
+ROP_CopGif::getFullCopPath(const UT_String& relative_path, UT_String& full_path) const
+{
+    OP_Node* node = findNode(relative_path);
+    if(!node)
+    {
+        return false;
+    }
+
+    // If this is not a cop2 node.
+    if(COP2_OPTYPE_ID != node->getOpTypeID())
+    {
+        return false;
+    }
+
+    node = (OP_Node*) CAST_COP2NODE(node);
+    if(!node)
+    {
+        return false;
+    }
+
+    node->getFullPath(full_path);
+    return true;
+}
+
 
 
 void

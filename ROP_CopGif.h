@@ -1,9 +1,12 @@
 #pragma once
 
 #include <ROP/ROP_Node.h>
+#include <UT/UT_Array.h>
+
+#include "gif.h"
 
 
-class GU_Detail;
+class TIL_CopResolver;
 
 
 class ROP_CopGif : public ROP_Node
@@ -38,6 +41,11 @@ class ROP_CopGif : public ROP_Node
         //! Called to enable / disable parameters.
         virtual bool updateParmsFlags();
 
+    protected:
+
+        //! Helper function which retrieves a full path to a given cop2 node.
+        bool getFullCopPath(const UT_String& relative_path, UT_String& full_path) const;
+
     public:
 
         //! Templates.
@@ -58,4 +66,21 @@ class ROP_CopGif : public ROP_Node
         //! Time for frames start and end.
         fpreal m_render_time_start;
         fpreal m_render_time_end;
+
+    protected:
+
+        //! List of frames.
+        UT_Array<UT_Array<unsigned char> > m_frames;
+
+        //! Width of data (in pixels).
+        unsigned int m_width;
+
+        //! Height of data (in pixels).
+        unsigned int m_height;
+
+    protected:
+
+        //! COP2 resolver.
+        TIL_CopResolver* m_cop_resolver;
+
 };
