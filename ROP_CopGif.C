@@ -24,14 +24,14 @@
 #define ROP_COP_GIF_DEFAULT_COP_PLANE "C"
 
 
-#define ROP_COP_GIF_COP_PATH "cop_path"
+#define ROP_COP_GIF_COP_PATH "cop2_path"
 #define ROP_COP_GIF_OUTPUT_FILE "output_file"
-#define SOP_COP_GIF_PLANE "cop_plane"
+#define SOP_COP_GIF_PLANE "cop2_plane"
 #define ROP_COP_GIF_SEPARATOR "rop_cop_gif_separator"
 
 
 static PRM_Name s_name_file_output(ROP_COP_GIF_OUTPUT_FILE, "Output File");
-static PRM_Name s_name_cop_path(ROP_COP_GIF_COP_PATH, "COP Path");
+static PRM_Name s_name_cop_path(ROP_COP_GIF_COP_PATH, "COP2 Path");
 static PRM_Name s_name_cop_plane(SOP_COP_GIF_PLANE, "COP2 Plane");
 static PRM_Name s_name_separator(ROP_COP_GIF_SEPARATOR, "");
 
@@ -76,7 +76,7 @@ getTemplates()
         PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
 
     ROP_CopGif::ms_template[template_idx] =
-        PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane),
+        PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane);
 
     ROP_CopGif::ms_template[template_idx++] = PRM_Template();
 
