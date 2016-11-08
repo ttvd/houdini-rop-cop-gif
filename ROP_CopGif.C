@@ -272,8 +272,16 @@ ROP_CopGif::endRender()
 
     for(int frame_idx = 0; frame_idx < m_frames.size(); ++frame_idx)
     {
-        const unsigned char* frame_data = nullptr;
-        if(!GifWriteFrame(&gif_writer, (const uint8_t*) frame_data, m_width, m_height, 0))
+        const UT_Array<unsigned char>& frame_data = m_frames(frame_idx);
+        if(!frame_data.size())
+        {
+            addError(ROP_MESSAGE, "Cop Gif: Invalid raster frame data.");
+            return ROP_ABORT_RENDER;
+        }
+
+        const unsigned char* frame_start = &frame_data(0);
+
+        if(!GifWriteFrame(&gif_writer, (const uint8_t*) frame_start, m_width, m_height, 0))
         {
             addError(ROP_MESSAGE, "Cop Gif: Unable to write a gif frame.");
             return ROP_ABORT_RENDER;
