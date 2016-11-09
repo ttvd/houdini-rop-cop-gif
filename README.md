@@ -11,7 +11,7 @@
   * You would have to patch CMake file to get this building on Linux.
 * Define HOUDINI_VERSION env variable to be the version of Houdini 15.5 you wish to build against (for example "15.5.607").
 * Alternatively, you can have HFS env variable defined (set when you source houdini_setup).
-* Generate build files from CMake for your favorite build system. For Windows builds use MSVC 2012.
+* Generate build files from CMake for your favorite build system. For Windows builds use MSVC 2015.
 * Build the ROP Houdini dso (ROP_CopGif.dylib or ROP_CopGif.dll).
 * Place the dso in the appropriate Houdini dso folder.
   * On OS X this would be /Users/your_username/Library/Preferences/houdini/15.5/dso/
@@ -27,9 +27,13 @@
 
 ## Limitations
 
-* Only fp16 and fp32 [0..1] color formats are supported at the moment.
+* Only fp16 and fp32 [0..1] color formats are supported.
 
-## License
+## Other
+
+* This plugin uses [gif-h library](https://github.com/ginsweater/gif-h-mit) for gif generation.
+
+## License for the plugin
 
 * Copyright Mykola Konyk, 2016
 * Distributed under the [MS-RL License.](http://opensource.org/licenses/MS-RL)
@@ -39,3 +43,6 @@
   * **Any other files you add to this project can be under any license you want.**
   * **You cannot use any of this code in a GPL project.**
   * Otherwise you are free to do pretty much anything you want with this code.
+  
+## License for gif-h
+* Copyright Charlie Tangora, MIT license.
