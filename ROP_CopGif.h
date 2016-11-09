@@ -32,8 +32,8 @@ class ROP_CopGif : public ROP_Node
 
     protected:
 
-        //! Called at the beginning of rendering to perform any intialization necessary.
-        virtual int startRender(int nframes, fpreal time_start, fpreal time_end);
+        //! Called at the beginning of rendering to perform any initialization necessary.
+        virtual int startRender(int num_frames, fpreal time_start, fpreal time_end);
 
         //! Called once for every frame that is rendered.
         virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss);
@@ -78,7 +78,10 @@ class ROP_CopGif : public ROP_Node
         void getParamOutputFileName(fpreal t, UT_String& output_file) const;
 
         //! Parameter evaluation - retrieve the name of the image plane.
-        void getImagePlaneName(fpreal t, UT_String& image_plane_name) const;
+        void getParamImagePlaneName(fpreal t, UT_String& image_plane_name) const;
+
+        //! Parameter evaluation - return true if we need to dither gif output.
+        bool getParamDither(fpreal t) const;
 
     protected:
 
@@ -101,5 +104,4 @@ class ROP_CopGif : public ROP_Node
 
         //! COP2 resolver.
         TIL_CopResolver* m_cop_resolver;
-
 };

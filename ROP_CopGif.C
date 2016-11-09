@@ -22,20 +22,33 @@
 #define ROP_COP_GIF_DESCRIPTION "COP Gif"
 
 #define ROP_COP_GIF_DEFAULT_COP_PLANE "C"
+#define ROP_COP_GIF_COPYRIGHT_TEXT "(c) 2016, Mykola Konyk, https://github.com/ttvd"
 
 
 #define ROP_COP_GIF_COP_PATH "cop2_path"
 #define ROP_COP_GIF_OUTPUT_FILE "output_file"
 #define SOP_COP_GIF_PLANE "cop2_plane"
+#define SOP_COP_GIF_DITHER "gif_dither"
+#define SOP_COP_GIF_COPYRIGHT "rop_cop_gif_copyright"
 #define ROP_COP_GIF_SEPARATOR "rop_cop_gif_separator"
+#define ROP_COP_GIF_SEPARATOR2 "rop_cop_gif_separator2"
+#define ROP_COP_GIF_SPACE "rop_cop_gif_space"
 
 
 static PRM_Name s_name_file_output(ROP_COP_GIF_OUTPUT_FILE, "Output File");
 static PRM_Name s_name_cop_path(ROP_COP_GIF_COP_PATH, "COP2 Path");
 static PRM_Name s_name_cop_plane(SOP_COP_GIF_PLANE, "COP2 Plane");
+static PRM_Name s_name_dither(SOP_COP_GIF_DITHER, "Dither");
 static PRM_Name s_name_separator(ROP_COP_GIF_SEPARATOR, "");
+static PRM_Name s_name_separator2(ROP_COP_GIF_SEPARATOR2, "");
+static PRM_Name s_name_copyright(SOP_COP_GIF_COPYRIGHT, "");
+static PRM_Name s_name_space(ROP_COP_GIF_SPACE, "");
+
 
 static PRM_Default s_default_name_cop_plane(0.0f, ROP_COP_GIF_DEFAULT_COP_PLANE);
+static PRM_Default s_default_copyright(0.0f, ROP_COP_GIF_COPYRIGHT_TEXT);
+static PRM_Default s_default_dither(false);
+
 
 static PRM_SpareData s_spare_file_output(PRM_SpareArgs()
     << PRM_SpareToken(PRM_SpareData::getFileChooserModeToken(), PRM_SpareData::getFileChooserModeValRead())
@@ -55,6 +68,20 @@ ROP_CopGif::ms_variable_pair = nullptr;
 
 
 static
+int
+callbackCopyright(void* data, int x, fpreal t, const PRM_Template* prm_template)
+{
+    ROP_CopGif* rop_node = (ROP_CopGif*) data;
+    if(rop_node)
+    {
+        rop_node->setString(ROP_COP_GIF_COPYRIGHT_TEXT, CH_STRING_LITERAL, SOP_COP_GIF_COPYRIGHT, 0, t);
+    }
+
+    return 0;
+}
+
+
+static
 PRM_Template*
 getTemplates()
 {
@@ -63,7 +90,7 @@ getTemplates()
         return ROP_CopGif::ms_template;
     }
 
-    const int template_count = 5;
+    const int template_count = 9;
     ROP_CopGif::ms_template = new PRM_Template[template_count];
     int template_idx = 0;
 
@@ -76,7 +103,17 @@ getTemplates()
         PRM_Template(PRM_STRING, 1, &s_name_cop_plane, &s_default_name_cop_plane);
 
     ROP_CopGif::ms_template[template_idx++] =
+        PRM_Template(PRM_TOGGLE, 1, &s_name_dither, &s_default_dither);
+
+    ROP_CopGif::ms_template[template_idx++] =
         PRM_Template(PRM_FILE, 1, &s_name_file_output, 0, 0, 0, 0, &s_spare_file_output);
+
+    ROP_CopGif::ms_template[template_idx++] = PRM_Template(PRM_LABEL, 0, &s_name_space);
+
+    ROP_CopGif::ms_template[template_idx++] = PRM_Template(PRM_SEPARATOR, 0, &s_name_separator2);
+
+    ROP_CopGif::ms_template[template_idx++] = PRM_Template(PRM_STRING_E, PRM_TYPE_NO_LABEL, 1, &s_name_copyright,
+        &s_default_copyright, 0, 0, callbackCopyright);
 
     ROP_CopGif::ms_template[template_idx++] = PRM_Template();
 
@@ -140,7 +177,7 @@ ROP_CopGif::updateParmsFlags()
 
 
 int
-ROP_CopGif::startRender(int nframes, fpreal time_start, fpreal time_end)
+ROP_CopGif::startRender(int num_frames, fpreal time_start, fpreal time_end)
 {
     if(error() < UT_ERROR_ABORT)
     {
@@ -172,7 +209,7 @@ ROP_CopGif::renderFrame(fpreal t, UT_Interrupt* boss)
     }
 
     UT_String cop_image_plane;
-    getImagePlaneName(t, cop_image_plane);
+    getParamImagePlaneName(t, cop_image_plane);
 
     UT_String cop_relative_path;
     getParamCopPath(t, cop_relative_path);
@@ -257,6 +294,15 @@ ROP_CopGif::endRender()
     UT_String output_file;
     getParamOutputFileName(0, output_file);
 
+    // Get dither setting.
+    bool gif_dither = getParamDither(0);
+
+    // Library we are using supports only 8-bit.
+    const int bit_depth = 8;
+
+    // We set frame delay to 0 (this is mostly ignored by all implementations).
+    const int frame_delay = 0;
+
     if(!output_file || !output_file.isstring())
     {
         addError(ROP_MESSAGE, "Cop Gif: Invalid output gif file specified.");
@@ -264,7 +310,7 @@ ROP_CopGif::endRender()
     }
 
     GifWriter gif_writer;
-    if(!GifBegin(&gif_writer, output_file.c_str(), m_width, m_height, 0))
+    if(!GifBegin(&gif_writer, output_file.c_str(), m_width, m_height, frame_delay, bit_depth, gif_dither))
     {
         addError(ROP_MESSAGE, "Cop Gif: Unable to initialize gif writer.");
         return ROP_ABORT_RENDER;
@@ -275,13 +321,20 @@ ROP_CopGif::endRender()
         const UT_Array<unsigned char>& frame_data = m_frames(frame_idx);
         if(!frame_data.size())
         {
-            addError(ROP_MESSAGE, "Cop Gif: Invalid raster frame data.");
+            addError(ROP_MESSAGE, "Cop Gif: Invalid raster frame data, zero size.");
+            return ROP_ABORT_RENDER;
+        }
+
+        if(frame_data.size() != m_width * m_height * 4u)
+        {
+            addError(ROP_MESSAGE, "Cop Gif: Invalid raster frame data, invalid size.");
             return ROP_ABORT_RENDER;
         }
 
         const unsigned char* frame_start = &frame_data(0);
 
-        if(!GifWriteFrame(&gif_writer, (const uint8_t*) frame_start, m_width, m_height, 0))
+        if(!GifWriteFrame(&gif_writer, (const uint8_t*) frame_start, m_width, m_height, frame_delay, bit_depth,
+            gif_dither))
         {
             addError(ROP_MESSAGE, "Cop Gif: Unable to write a gif frame.");
             return ROP_ABORT_RENDER;
@@ -339,11 +392,17 @@ ROP_CopGif::getParamOutputFileName(fpreal t, UT_String& output_file) const
 
 
 void
-ROP_CopGif::getImagePlaneName(fpreal t, UT_String& image_plane_name) const
+ROP_CopGif::getParamImagePlaneName(fpreal t, UT_String& image_plane_name) const
 {
     evalString(image_plane_name, SOP_COP_GIF_PLANE, 0, t);
 }
 
+
+bool
+ROP_CopGif::getParamDither(fpreal t) const
+{
+    return evalInt(SOP_COP_GIF_DITHER, 0, t) != 0;
+}
 
 unsigned int
 ROP_CopGif::getCopDataChannelCount(PXL_Packing packing) const
@@ -501,9 +560,9 @@ ROP_CopGif::processFrameRaster(fpreal t, TIL_Raster* raster) const
 
     UT_Array<unsigned char> frame_data;
 
-    for(int idx_width = 0; idx_width < m_width; ++idx_width)
+    for(int idx_height = m_height - 1; idx_height >= 0; --idx_height)
     {
-        for(int idx_height = 0; idx_height < m_height; ++idx_height)
+        for(int idx_width = 0; idx_width < m_width; ++idx_width)
         {
             const unsigned char* pixel = (const unsigned char*) raster->getPixel(idx_width, idx_height);
             getFramePixel(pixel, packing, pixel_format, frame_data);
