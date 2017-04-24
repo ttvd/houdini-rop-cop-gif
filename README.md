@@ -7,9 +7,9 @@
 
 ## Building
 
-* Tested on Windows and Houdini 15.5.
+* Tested on Windows and Houdini 16.0.
   * You would have to patch CMake file to get this building on Linux.
-* Define HOUDINI_VERSION env variable to be the version of Houdini 15.5 you wish to build against (for example "16.0.557").
+* Define HOUDINI_VERSION env variable to be the version of Houdini 16.0 you wish to build against (for example "16.0.557").
 * Alternatively, you can have HFS env variable defined (set when you source houdini_setup).
 * Generate build files from CMake for your favorite build system. For Windows builds use MSVC 2015.
 * Build the ROP Houdini dso (ROP_CopGif.dylib or ROP_CopGif.dll).
