@@ -2,20 +2,21 @@
 
 [Houdini](http://www.sidefx.com/index.php) HDK ROP node which creates a gif file from a given COP2 node.
 
-## Binaries, Houdini 15.5
-* [Windows, Houdini 15.5.607](https://github.com/ttvd/houdini-rop-cop-gif/files/580245/houdini.rop.cop.gif.15.5.607.zip) 
+## Binaries, Houdini 16.0
+* [Windows, Houdini 16.0.557](https://github.com/ttvd/houdini-rop-cop-gif/releases/download/1.1/houdini.rop.cop.gif.16.0.557.rar) 
 
 ## Building
 
 * Tested on Windows and Houdini 15.5.
   * You would have to patch CMake file to get this building on Linux.
-* Define HOUDINI_VERSION env variable to be the version of Houdini 15.5 you wish to build against (for example "15.5.607").
+* Define HOUDINI_VERSION env variable to be the version of Houdini 15.5 you wish to build against (for example "16.0.557").
 * Alternatively, you can have HFS env variable defined (set when you source houdini_setup).
 * Generate build files from CMake for your favorite build system. For Windows builds use MSVC 2015.
 * Build the ROP Houdini dso (ROP_CopGif.dylib or ROP_CopGif.dll).
 * Place the dso in the appropriate Houdini dso folder.
-  * On OS X this would be /Users/your_username/Library/Preferences/houdini/15.5/dso/
-  * On Windows this would be C:\Users\your_username\Documents\houdini15.5\dso
+  * On OS X this would be /Users/your_username/Library/Preferences/houdini/16.0/dso/
+  * On Windows this would be C:\Users\your_username\Documents\houdini16.0\dso
+  * Or $HOUDINI_PATH/dso
 
 ## Usage
 
